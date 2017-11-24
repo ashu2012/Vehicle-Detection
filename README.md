@@ -1,113 +1,11 @@
 
+[//]: # (Image References)
+[image1]: ./examples/car_not_car.png
+[image2]: ./examples/HOG_example.jpg
+[image5]: ./examples/bboxes_and_heat.png
 # Self-Driving Car Engineer Nanodegree
 ## Project: Vehicle Detection and Tracking
 
-
-
-## Features extraction
-
-Here we define functions for features extraction (HOG, binned color and color histogram features). The functions are based on code from the Udacity's lectures.
-
-
-### Histogram of Oriented Gradients (HOG)
-
-def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
-    if vis == True: # Call with two outputs if vis==True to visualize the HOG
-        features, hog_image = hog(img, orientations=orient, 
-                                  pixels_per_cell=(pix_per_cell, pix_per_cell),
-                                  cells_per_block=(cell_per_block, cell_per_block), 
-                                  transform_sqrt=True, 
-                                  visualise=vis, feature_vector=feature_vec)
-        return features, hog_image
-    else:      # Otherwise call with one output
-        features = hog(img, orientations=orient, 
-                       pixels_per_cell=(pix_per_cell, pix_per_cell),
-                       cells_per_block=(cell_per_block, cell_per_block), 
-                       transform_sqrt=True, 
-                       visualise=vis, feature_vector=feature_vec)
-        return features
-
-# Define a function to compute binned color features  
-def bin_spatial(img, size=(16, 16)):
-    return cv2.resize(img, size).ravel() 
-
-# Define a function to compute color histogram features 
-def color_hist(img, nbins=32):
-    ch1 = np.histogram(img[:,:,0], bins=nbins, range=(0, 256))[0]#We need only the histogram, no bins edges
-    ch2 = np.histogram(img[:,:,1], bins=nbins, range=(0, 256))[0]
-    ch3 = np.histogram(img[:,:,2], bins=nbins, range=(0, 256))[0]
-    hist = np.hstack((ch1, ch2, ch3))
-    return hist
-```
-
-### The `extract_features` function extracl all nessesary features from images. It also augment the train dataset by horizontal image flipping.
-
-
-```python
-# Define a function to extract features from a list of images
-def img_features(feature_image, spatial_feat, hist_feat, hog_feat, hist_bins, orient, 
-                        pix_per_cell, cell_per_block, hog_channel):
-    file_features = []
-    if spatial_feat == True:
-        spatial_features = bin_spatial(feature_image, size=spatial_size)
-        #print 'spat', spatial_features.shape
-        file_features.append(spatial_features)
-    if hist_feat == True:
-         # Apply color_hist()
-        hist_features = color_hist(feature_image, nbins=hist_bins)
-        #print 'hist', hist_features.shape
-        file_features.append(hist_features)
-    if hog_feat == True:
-    # Call get_hog_features() with vis=False, feature_vec=True
-        if hog_channel == 'ALL':
-            hog_features = []
-            for channel in range(feature_image.shape[2]):
-                hog_features.append(get_hog_features(feature_image[:,:,channel], 
-                                        orient, pix_per_cell, cell_per_block, 
-                                        vis=False, feature_vec=True))
-                hog_features = np.ravel(hog_features)        
-        else:
-            feature_image = cv2.cvtColor(feature_image, cv2.COLOR_LUV2RGB)
-            feature_image = cv2.cvtColor(feature_image, cv2.COLOR_RGB2GRAY)
-            hog_features = get_hog_features(feature_image[:,:], orient, 
-                            pix_per_cell, cell_per_block, vis=False, feature_vec=True)
-                #print 'hog', hog_features.shape
-            # Append the new feature vector to the features list
-        file_features.append(hog_features)
-    return file_features
-
-def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
-                        hist_bins=32, orient=9, 
-                        pix_per_cell=8, cell_per_block=2, hog_channel=0,
-                        spatial_feat=True, hist_feat=True, hog_feat=True):
-    # Create a list to append feature vectors to
-    features = []
-    # Iterate through the list of images
-    for file_p in imgs:
-        file_features = []
-        image = cv2.imread(file_p) # Read in each imageone by one
-        # apply color conversion if other than 'RGB'
-        if color_space != 'RGB':
-            if color_space == 'HSV':
-                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-            elif color_space == 'LUV':
-                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2LUV)
-            elif color_space == 'HLS':
-                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
-            elif color_space == 'YUV':
-                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
-            elif color_space == 'YCrCb':
-                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
-        else: feature_image = np.copy(image)      
-        file_features = img_features(feature_image, spatial_feat, hist_feat, hog_feat, hist_bins, orient, 
-                        pix_per_cell, cell_per_block, hog_channel)
-        features.append(np.concatenate(file_features))
-        feature_image=cv2.flip(feature_image,1) # Augment the dataset with flipped images
-        file_features = img_features(feature_image, spatial_feat, hist_feat, hog_feat, hist_bins, orient, 
-                        pix_per_cell, cell_per_block, hog_channel)
-        features.append(np.concatenate(file_features))
-    return features # Return list of feature vectors
-```
 
 ## Data loading
 Here we create lists of [vehicles](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip) and [not-vehicles](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip) images provided by Udacity. Corrisponding folders contain unzilled archives.
@@ -147,6 +45,46 @@ for i in np.arange(32,64):
 
 
 ![png](output_9_0.png)
+
+
+## Features extraction
+
+Here we define functions for features extraction (HOG, binned color and color histogram features). The functions are based on code from the Udacity's lectures.
+
+We tried orient = 8  as  HOG orientations
+pix_per_cell = (8 ,8) # HOG pixels per cell
+cell_per_block = (2 ,2)# HOG cells per block
+I am applying sckit hog function on LUV channel of image.
+
+### Histogram of Oriented Gradients (HOG)
+
+#### 1.  Extracted HOG features from the training images.
+
+
+
+I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+
+![alt text][image1]
+
+```python
+def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
+    if vis == True: # Call with two outputs if vis==True to visualize the HOG
+        features, hog_image = hog(img, orientations=orient, 
+                                  pixels_per_cell=(pix_per_cell, pix_per_cell),
+                                  cells_per_block=(cell_per_block, cell_per_block), 
+                                  transform_sqrt=True, 
+                                  visualise=vis, feature_vector=feature_vec)
+        return features, hog_image
+    else:      # Otherwise call with one output
+        features = hog(img, orientations=orient, 
+                       pixels_per_cell=(pix_per_cell, pix_per_cell),
+                       cells_per_block=(cell_per_block, cell_per_block), 
+                       transform_sqrt=True, 
+                       visualise=vis, feature_vector=feature_vec)
+        return features
+```
+
+![alt text][image2]
 
 
 ## Classifier
@@ -283,96 +221,6 @@ print('...')
 
 
 
-```python
-def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
-                        hist_bins=32, orient=9, 
-                        pix_per_cell=8, cell_per_block=2, hog_channel=0,
-                        spatial_feat=True, hist_feat=True, hog_feat=True):    
-    #1) Define an empty list to receive features
-    img_features = []
-    #2) Apply color conversion if other than 'RGB'
-    if color_space != 'RGB':
-        if color_space == 'HSV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-        elif color_space == 'LUV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
-        elif color_space == 'HLS':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-        elif color_space == 'YUV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-        elif color_space == 'YCrCb':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    else: feature_image = np.copy(img)      
-    #3) Compute spatial features if flag is set
-    if spatial_feat == True:
-        spatial_features = bin_spatial(feature_image, size=spatial_size)
-        #4) Append features to list
-        img_features.append(spatial_features)
-    #5) Compute histogram features if flag is set
-    if hist_feat == True:
-        hist_features = color_hist(feature_image, nbins=hist_bins)
-        #6) Append features to list
-        img_features.append(hist_features)
-    #7) Compute HOG features if flag is set
-    if hog_feat == True:
-        if hog_channel == 'ALL':
-            hog_features = []
-            for channel in range(feature_image.shape[2]):
-                hog_features.extend(get_hog_features(feature_image[:,:,channel], 
-                                    orient, pix_per_cell, cell_per_block, 
-                                    vis=False, feature_vec=True))      
-        else:
-            hog_features = get_hog_features(feature_image[:,:,hog_channel], orient, 
-                        pix_per_cell, cell_per_block, vis=False, feature_vec=True)
-        #8) Append features to list
-        img_features.append(hog_features)
-    #9) Return concatenated array of features
-    return np.concatenate(img_features)
-```
-
-
-```python
-# Define a function you will pass an image 
-# and the list of windows to be searched (output of slide_windows())
-def search_windows(img, windows, clf, scaler, color_space='RGB', 
-                    spatial_size=(32, 32), hist_bins=32, 
-                    hist_range=(0, 256), orient=8, 
-                    pix_per_cell=8, cell_per_block=2, 
-                    hog_channel=0, spatial_feat=True, 
-                    hist_feat=True, hog_feat=True):
-
-    #1) Create an empty list to receive positive detection windows
-    on_windows = []
-    #2) Iterate over all windows in the list
-    for window in windows:
-        #3) Extract the test window from original image
-        test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))      
-        #4) Extract features for that window using single_img_features()
-        features = single_img_features(test_img, color_space=color_space, 
-                            spatial_size=spatial_size, hist_bins=hist_bins, 
-                            orient=orient, pix_per_cell=pix_per_cell, 
-                            cell_per_block=cell_per_block, 
-                            hog_channel=hog_channel, spatial_feat=spatial_feat, 
-                            hist_feat=hist_feat, hog_feat=hog_feat)
-        #5) Scale extracted features to be fed to classifier
-        test_features = scaler.transform(np.array(features).reshape(1, -1))
-        #6) Predict using your classifier
-        prediction = clf.predict(test_features)
-        #7) If positive (prediction == 1) then save the window
-        if prediction == 1:
-            on_windows.append(window)
-    #8) Return windows for positive detections
-    return on_windows
-
-# A function to show an image
-def show_img(img):
-    if len(img.shape)==3: #Color BGR image
-        plt.figure()
-        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    else: # Grayscale image
-        plt.figure()
-        plt.imshow(img, cmap='gray')
-```
 
 ### Classifier test
 
@@ -426,6 +274,7 @@ print(round(time.time()-t, 2), 'Seconds to process test images')
 
 ### Combine Various Sliding Window Searches
 
+i tried various size of window search . we found that for y variying between 350 to 550 we can capture most of the cars in horizon .  Also we should try to capture cars in left and right lane for that i tried to  xstart=800 , xstop=None , ystart = 300 and ystop = 700 . 
 
 ```python
 color_space = 'LUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -489,17 +338,14 @@ show_img(window_img)
 
 ![png](output_20_0.png)
 
+We found that with scale less than 1 we are getting lot of false positives  so I tried approach given in lectures to use heat maps to remove false positives.
 
 ## Advanced Sliding Windows
 
 To increase performance we need to analize the smallest possible number of windows. That is why, we will scan with a search window not across the whole image, but only areas where a new car can appear and also we are going to scan areas where a car was detected (track cars). 
-### Detect new cars
-On every frame we look for new passing cars (red areas on sides) cars and new far cars (blue area).
 
 
-```python
 
-```
 
 ### Heatmap
 This method (duplicated from lesson material) produces a heat map based on rectangle locations (additive with overlap).
@@ -645,6 +491,9 @@ for i, im in enumerate(test_images):
 
 ![png](output_32_1.png)
 
+### Here are six frames and their corresponding heatmaps:
+
+![alt text][image5]
 
 
 
@@ -659,7 +508,6 @@ Here's a [link to my video result](./test_video_out.mp4)
 We have calculated different size of bounding boxes and then apply svm classifier to detect images within that. Then as per lectures we draw heat maps and from heat maps we have drawn max and min bounding boxes.  Same logic is implemented as process function which takes eachimage from video frame.  We can improve this pipeline By using RCNN which is already implemented in DARKNET YOLO to detect objects from videos in real time. SVM based classification is also doing pretty well in real time . 
 
 
-
 ```python
 from moviepy.editor import VideoFileClip
 from IPython.display import HTML
@@ -669,26 +517,20 @@ clip_test_out = clip_test.fl_image(process_frame)
 %time clip_test_out.write_videofile(test_out_file, audio=False)
 ```
 
-    WARNING:py.warnings:/home/ashutosh/anaconda3/envs/aind-dog/lib/python3.6/site-packages/skimage/feature/_hog.py:119: skimage_deprecation: Default value of `block_norm`==`L1` is deprecated and will be changed to `L2-Hys` in v0.15
-      'be changed to `L2-Hys` in v0.15', skimage_deprecation)
-    
+```python
+proj_out_file = 'project_video_out.mp4'
+clip_proj = VideoFileClip('project_video.mp4') #.subclip(23,26)  # subclip = only specified span of video
+#clip_proj.save_frame('./test_images/project1.jpg', t=1.0) # saves the frame at time = t seconds
+clip_proj_out = clip_proj.fl_image(process_frame)
+%time clip_proj_out.write_videofile(proj_out_file, audio=False)
+```
 
 
-    [MoviePy] >>>> Building video test_video_out.mp4
-    [MoviePy] Writing video test_video_out.mp4
 
 
-      0%|          | 0/39 [00:00<?, ?it/s]WARNING:py.warnings:/home/ashutosh/anaconda3/envs/aind-dog/lib/python3.6/site-packages/skimage/feature/_hog.py:119: skimage_deprecation: Default value of `block_norm`==`L1` is deprecated and will be changed to `L2-Hys` in v0.15
-      'be changed to `L2-Hys` in v0.15', skimage_deprecation)
-    
-     97%|█████████▋| 38/39 [00:55<00:01,  1.26s/it]
-
-
-    [MoviePy] Done.
-    [MoviePy] >>>> Video ready: test_video_out.mp4 
-    
-    CPU times: user 41.6 s, sys: 288 ms, total: 41.9 s
-    Wall time: 59.4 s
+<video width="960" height="540" controls>
+  <source src="project_video_out.mp4">
+</video>
 
 
 
@@ -712,29 +554,4 @@ HTML("""
 
 
 
-```python
-proj_out_file = 'project_video_out.mp4'
-clip_proj = VideoFileClip('project_video.mp4') #.subclip(23,26)  # subclip = only specified span of video
-#clip_proj.save_frame('./test_images/project1.jpg', t=1.0) # saves the frame at time = t seconds
-clip_proj_out = clip_proj.fl_image(process_frame)
-%time clip_proj_out.write_videofile(proj_out_file, audio=False)
-```
 
-    WARNING:py.warnings:/home/ashutosh/anaconda3/envs/aind-dog/lib/python3.6/site-packages/skimage/feature/_hog.py:119: skimage_deprecation: Default value of `block_norm`==`L1` is deprecated and will be changed to `L2-Hys` in v0.15
-      'be changed to `L2-Hys` in v0.15', skimage_deprecation)
-    
-
-
-    [MoviePy] >>>> Building video project_video_out.mp4
-    [MoviePy] Writing video project_video_out.mp4
-
-
-      0%|          | 0/1261 [00:00<?, ?it/s]WARNING:py.warnings:/home/ashutosh/anaconda3/envs/aind-dog/lib/python3.6/site-packages/skimage/feature/_hog.py:119: skimage_deprecation: Default value of `block_norm`==`L1` is deprecated and will be changed to `L2-Hys` in v0.15
-      'be changed to `L2-Hys` in v0.15', skimage_deprecation)
-    
-      3%|▎         | 36/1261 [01:13<50:29,  2.47s/it]
-
-
-```python
-
-```
