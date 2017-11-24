@@ -4,26 +4,13 @@
 
 
 
-```python
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
-import numpy as np
-import cv2
-import glob
-import time
-from sklearn.svm import LinearSVC
-from sklearn.preprocessing import StandardScaler
-from skimage.feature import hog
-from sklearn.model_selection import train_test_split
-%matplotlib inline
-```
-
 ## Features extraction
 
 Here we define functions for features extraction (HOG, binned color and color histogram features). The functions are based on code from the Udacity's lectures.
 
 
-```python
+### Histogram of Oriented Gradients (HOG)
+
 def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
     if vis == True: # Call with two outputs if vis==True to visualize the HOG
         features, hog_image = hog(img, orientations=orient, 
