@@ -525,7 +525,8 @@ clip_proj_out = clip_proj.fl_image(process_frame)
 %time clip_proj_out.write_videofile(proj_out_file, audio=False)
 ```
 
-
+project video in this repository -> project_video_out.mp4
+test videos  in this repository -> test_video_out.mp4
 
 
 <video width="960" height="540" controls>
@@ -533,14 +534,6 @@ clip_proj_out = clip_proj.fl_image(process_frame)
 </video>
 
 
-
-```python
-HTML("""
-<video width="960" height="540" controls>
-  <source src="{0}">
-</video>
-""".format(test_out_file))
-```
 
 
 
